@@ -1,6 +1,6 @@
 # USAGE
 # python cat_detector.py --image images/cat_01.jpg
-
+from datetime import datetime
 # import the necessary packages
 import argparse
 import cv2
@@ -19,22 +19,28 @@ args = vars(ap.parse_args())
 
 
 
-#camera = cv2.VideoCapture(0)
-netstream = cv2.VideoCapture('rtsp://192.168.128.113:554/live')
+camera = cv2.VideoCapture(0)
+camera.set(3,640)
+camera.set(4,480)
+#netstream = cv2.VideoCapture('rtsp://192.168.128.113:554/live')
 
 # load the cat detector Haar cascade, then detect cat faces in the input image
 detector = cv2.CascadeClassifier(args["cascade"])
 
+directory = "./cats"
+
 # load the input image and convert it to grayscale
 #image = cv2.imread(args["image"])
+lastImageSaveTime = datetime.now()
 while (1):
-	ret, image = netstream.read()
+	ret, image = camera.read()
+	now = datetime.now()
 	if ret == False:
 		print("Frame is empty")
 		break;
 	else:
-		cv2.imshow('VIDEO', image)
-		cv2.waitKey(1)
+	#	cv2.imshow('VIDEO', image)
+	#	cv2.waitKey(1)
 
 		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 		rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
@@ -42,14 +48,24 @@ while (1):
 # loop over the cat faces and draw a rectangle surrounding each
 		for (i, (x, y, w, h)) in enumerate(rects):
 			cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
-			cv2.putText(image, "Cat #{}".format(i + 1), (x, y - 10),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+			cv2.putText(image, "Cat #{}".format(i + 1), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
 			catCount = catCount + 1
 
 #write the image
 #cv2.imwrite('result.jpg', image)
 # show the detected cat faces
-		if (catCount > 0):
-			cv2.imshow("Cat Faces", image)
-			cv2.waitKey(1)
+	#	if (catCount > 0):
+		cv2.putText(image, now.strftime("%Y-%m-%d %H:%M:%S"), (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+			
+		cv2.imshow("Cat Faces", image)
+		cv2.waitKey(1)
+
+		saveImageEnable = ((now - lastImageSaveTime).total_seconds() > 2)
+		if saveImageEnable and (catCount > 0):
+			lastImageSaveTime = now
+			filename = directory + "/" + now.strftime("%Y-%m-%d-%H-%M-%S")+".jpg"
+			cv2.imwrite(filename, image) 
+
+
+
 #cv2.destroyAllWindows()
