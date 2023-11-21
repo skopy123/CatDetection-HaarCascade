@@ -50,7 +50,8 @@ dml = device
 #dinov2_vitb14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_lc')
 #dinov2_vitb14_reg.eval().to(device)
 
-dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
+#dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
+dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14')
 dinov2_vits14_reg.eval().to(device)
 
 
@@ -91,6 +92,9 @@ def ComputeTensorForImage(fileName):
 
 ComputeTensorForImage("./testImg/maugli1.jpg")
 ComputeTensorForImage("./testImg/maugli2.jpg")
+ComputeTensorForImage("./testImg/gita1.jpg")
+ComputeTensorForImage("./testImg/gita2.jpg")
+
 
 #print ("dinoOutput: ", transformedOutput)
 
@@ -99,6 +103,10 @@ def printCosineDistance(index1, index2):
     print ("distance " + imageNames[index1] + "-" + imageNames[index2] + ": " , cosine(resultTensors[index1], resultTensors[index2]))
 
 printCosineDistance(0, 1)
+printCosineDistance(2, 3)
+
+printCosineDistance(0, 2)
+printCosineDistance(0, 3)
 exit()
 
 #result for maugli
