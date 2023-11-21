@@ -28,27 +28,27 @@ print(f'Using {device} for inference')
 
 print("torch and dml test")
 dml = device
-tensor1 = torch.tensor([1]).to(dml) # Note that dml is a variable, not a string!
-tensor2 = torch.tensor([2]).to(dml)
-dml_algebra = tensor1 + tensor2
-dml_algebra.item()
-print(dml_algebra.item())
+#tensor1 = torch.tensor([1]).to(dml) # Note that dml is a variable, not a string!
+#tensor2 = torch.tensor([2]).to(dml)
+#dml_algebra = tensor1 + tensor2
+#dml_algebra.item()
+#print(dml_algebra.item())
 
-exit()
+#exit()
 
 #torch.backends.quantized.engine = 'qnnpack'
 #net = models.quantization.mobilenet_v2(pretrained=True, quantize=True)
 # jit model to take it from ~20fps to ~30fps
 #net = torch.jit.script(net)
 
-resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
-utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_convnets_processing_utils')
+#resnet50 = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_resnet50', pretrained=True)
+#utils = torch.hub.load('NVIDIA/DeepLearningExamples:torchhub', 'nvidia_convnets_processing_utils')
 
 #model_dino = torch.hub.load('facebookresearch/dino:main', 'dino_vitb8', pretrained=True)
 #model_dino = torch.hub.load('facebookresearch/dino:main', 'dino_vits16', pretrained=True)
-dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
+#dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
 #dinov2_vitb14_lc = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_lc')
-dinov2_vitb14_reg.eval().to(device)
+#dinov2_vitb14_reg.eval().to(device)
 
 dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
 dinov2_vits14_reg.eval().to(device)
@@ -61,7 +61,7 @@ image1 = cv2.imread("./images/cat_01.jpg")
 #cv2.waitKey(0)
 image2 = cv2.imread("./images/cat_02.jpg")
 
-dim = (224, 224)
+dim = (140, 140)
 # Define the transformation
 transform = transforms.Compose([
     transforms.ToTensor()
@@ -85,7 +85,7 @@ input_batch = input_tensor.unsqueeze(0)
 
 
 
-dim = (224, 168)
+#dim = (224, 168)
 
 
 """
@@ -116,16 +116,16 @@ imageNames = [
 ]
 
 
-images = []
-for imageName in imageNames:
-    images.append(transform(cv2.imread("./images/newTemplates/"+imageName+".png")).unsqueeze(0))
+#images = []
+#for imageName in imageNames:
+#    images.append(transform(cv2.imread("./images/newTemplates/"+imageName+".png")).unsqueeze(0))
 
 startTime = time.time()
 
-input_batch = torch.cat(
-   #prepared_images 
-  images
-).to(device)
+#input_batch = torch.cat(
+#   #prepared_images 
+#  images
+#).to(device)
 
 dinoOutput = dinov2_vits14_reg(input_batch).cpu()
 print ("output size: ", dinoOutput.size())
@@ -134,10 +134,10 @@ knownCatsTensors = []
 for i in range(0,imageNames.__len__()):
     knownCatsTensors.append(dinoOutput[i].detach().numpy())
 endTime = time.time()
-print ("GPU processing time (5 images): ", endTime - startTime)
+print ("CPU processing time (1 images): ", endTime - startTime)
 
 #print ("dinoOutput: ", transformedOutput)
-
+exit()
 
 #define print function, input is two indexes, it read names from imageNames array and compute cosine distance between coresponding tensors
 def printCosineDistance(index1, index2):
