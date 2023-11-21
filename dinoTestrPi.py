@@ -53,95 +53,53 @@ dml = device
 dinov2_vits14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14_reg')
 dinov2_vits14_reg.eval().to(device)
 
-#resnet50.eval().to(device)
 
-# load the input image and convert it to grayscale
-image1 = cv2.imread("./images/cat_01.jpg")
-#cv2.imshow('cat image', image)
-#cv2.waitKey(0)
-image2 = cv2.imread("./images/cat_02.jpg")
-
-dim = (140, 140)
-# Define the transformation
-transform = transforms.Compose([
-    transforms.ToTensor()
-])
-
-
-
-
-image1 = cv2.resize(image1, dim, interpolation = cv2.INTER_AREA)
 preprocess = transforms.Compose([
     # convert the frame to a CHW torch tensor for training
     transforms.ToTensor(),
     # normalize the colors to the range that mobilenet_v2/3 expect
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
-input_tensor = preprocess(image1)
-# The model can handle multiple images simultaneously so we need to add an
-# empty dimension for the batch.
-# [3, 224, 224] -> [1, 3, 224, 224]
-input_batch = input_tensor.unsqueeze(0)
+
+def loadImage(fileName, width, height):
+    dim = (width, height)
+    image1 = cv2.imread(fileName)
+    image1 = cv2.resize(image1, dim, interpolation = cv2.INTER_LINEAR)
+    input_tensor = preprocess(image1)
+    return input_tensor.unsqueeze(0)
 
 
 
-#dim = (224, 168)
+imageNames = []
+resultTensors = []
+
+def ComputeTensorForImage(fileName):
+    imageNames.append(fileName)
+    startTime = time.time()
+    modelInput = loadImage(fileName, 224, 224)
+    #compute output
+    dinoOutput = dinov2_vits14_reg(modelInput)#.cpu()
+    print ("output size: ", dinoOutput.size())
+    #print ("output: ", dinoOutput)
+    resultTensors.append(dinoOutput[0].detach().numpy())
+    endTime = time.time()
+    print ("CPU processing time (1 images): ", endTime - startTime)
 
 
-"""
+#ComputeTensorForImage("./images/cat_01.jpg")
+#ComputeTensorForImage("./images/cat_03.jpg")
 
-images = [
-    transform(cv2.resize(cv2.imread("./images/maugli1.jpg"),dim, interpolation = cv2.INTER_LINEAR)).unsqueeze(0),
-    transform(cv2.resize(cv2.imread("./images/maugli1.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-    transform(cv2.resize(cv2.imread("./images/maugli2.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-    transform(cv2.resize(cv2.imread("./images/maugli3.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-  
-    transform(cv2.resize(cv2.imread("./images/amalka.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-    transform(cv2.resize(cv2.imread("./images/gita1.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-    transform(cv2.resize(cv2.imread("./images/gita2.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-    #transform(cv2.resize(cv2.imread("./images/kocour1.jpg"),dim, interpolation = cv2.INTER_AREA)).unsqueeze(0),
-  
-    #transform(cv2.imread("./images/amalka.jpg")).unsqueeze(0),
-]
-#prepared_images = [utils.prepare_input_from_uri(uri) for uri in uris]
-"""
-
-imageNames = [
-    "m1",
-    "m2",
-    "m3",
-    "g1",
-    "g2",
-    #"g3",
-]
-
-
-#images = []
-#for imageName in imageNames:
-#    images.append(transform(cv2.imread("./images/newTemplates/"+imageName+".png")).unsqueeze(0))
-
-startTime = time.time()
-
-#input_batch = torch.cat(
-#   #prepared_images 
-#  images
-#).to(device)
-
-dinoOutput = dinov2_vits14_reg(input_batch).cpu()
-print ("output size: ", dinoOutput.size())
-#cretate array of numpy tensors
-knownCatsTensors = []
-for i in range(0,imageNames.__len__()):
-    knownCatsTensors.append(dinoOutput[i].detach().numpy())
-endTime = time.time()
-print ("CPU processing time (1 images): ", endTime - startTime)
+ComputeTensorForImage("./testImg/maugli1.jpg")
+ComputeTensorForImage("./testImg/maugli2.jpg")
 
 #print ("dinoOutput: ", transformedOutput)
-exit()
 
 #define print function, input is two indexes, it read names from imageNames array and compute cosine distance between coresponding tensors
 def printCosineDistance(index1, index2):
-    print ("distance " + imageNames[index1] + "-" + imageNames[index2] + ": " , cosine(knownCatsTensors[index1], knownCatsTensors[index2]))
+    print ("distance " + imageNames[index1] + "-" + imageNames[index2] + ": " , cosine(resultTensors[index1], resultTensors[index2]))
+
+printCosineDistance(0, 1)
+exit()
 
 #result for maugli
 def computeDeltas(referenceIndex):
@@ -179,7 +137,7 @@ def compareUnknownImageToDB(fileName):
     startTime2 = time.time()
     unknownTensor = GetTensorForUnknownImage(fileName)
     for i in range(0,imageNames.__len__()):
-        tensor = cosine(unknownTensor, knownCatsTensors[i])
+        tensor = cosine(unknownTensor, resultTensors[i])
         endTime2 = time.time()
         print ("distance " + fileName + "-" + imageNames[i] + ": " , tensor,  " time: ", endTime2 - startTime2)
 
@@ -191,7 +149,7 @@ compareUnknownImageToDB("./images/gita1.jpg")
 compareUnknownImageToDB("./images/gita2.jpg")
 
 exit()
-print ("ditance 0-7: ", cosine(knownCatsTensors[0], knownCatsTensors[7]))
+print ("ditance 0-7: ", cosine(resultTensors[0], resultTensors[7]))
 
 exit()
    # run model
