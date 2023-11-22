@@ -122,6 +122,8 @@ directory = "./cats"
 lastImageSaveTime = datetime.now()
 while (1):
 	ret, image = camera.read()
+	#ret = True
+	#image = cv2.imread("./cats/2023-11-01-08-21-36.jpg")
 	now = datetime.now()
 	if ret == False:
 		print("Frame is empty")
@@ -137,8 +139,8 @@ while (1):
 		for (i, (x, y, w, h)) in enumerate(rects):
 			#enlarge roundBox by 50%
 			scale = 1.5
-			x = x - (w*scale - w)/2
-			y = y - (h*scale - h)/2
+			x = int(x - (w*scale - w)/2)
+			y = int(y - (h*scale - h)/2)
 			if (x < 0):
 				x = 0
 			if (y < 0):
@@ -146,8 +148,8 @@ while (1):
 			w = w*scale
 			h = h*scale
 			# round w and h to be devidaible by 14, if not round up
-			w = (w//14)*14 + (w%14 > 0)*14
-			h = (h//14)*14 + (h%14 > 0)*14
+			w = int((w//14)*14 + (w%14 > 0)*14)
+			h = int((h//14)*14 + (h%14 > 0)*14)
 
 			startTime = time.time()
 			cropImage = image[int(y):int(y+h), int(x):int(x+w)]
@@ -158,9 +160,10 @@ while (1):
 			cosM2 = cosine(unknownCatTensor, resultTensors[1])
 			endTime = time.time()
 			
-			print ("CPU processing time (1 images): ", endTime - startTime)
+
 
 			message = "Cat #{}, cosDst-m1:{:.3f}, cosDst-m2:{:.3f}".format(i + 1, cosM1, cosM2)
+			print("CPU processing time (1 images): ", endTime - startTime , " catInfo: " , message)
 			cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
 			cv2.putText(image, message, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
 			catCount = catCount + 1
