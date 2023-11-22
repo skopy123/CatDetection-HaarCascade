@@ -153,7 +153,7 @@ while (1):
 			cropImage = image[int(y):int(y+h), int(x):int(x+w)]
 			input_tensor = preprocess(cropImage).unsqueeze(0)
 			dinoOutput2 = dinov2_vits14_reg(input_tensor)
-			unknownCatTensor = dinoOutput[0].detach().numpy()
+			unknownCatTensor = dinoOutput2[0].detach().numpy()
 			cosM1 = cosine(unknownCatTensor, resultTensors[0])
 			cosM2 = cosine(unknownCatTensor, resultTensors[1])
 			endTime = time.time()
