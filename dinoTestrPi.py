@@ -150,7 +150,7 @@ while (1):
 			h = (h//14)*14 + (h%14 > 0)*14
 
 			startTime = time.time()
-			cropImage = image[y:y+h, x:x+w]
+			cropImage = image[int(y):int(y+h), int(x):int(x+w)]
 			input_tensor = preprocess(cropImage).unsqueeze(0)
 			dinoOutput2 = dinov2_vits14_reg(input_tensor)
 			unknownCatTensor = dinoOutput[0].detach().numpy()
