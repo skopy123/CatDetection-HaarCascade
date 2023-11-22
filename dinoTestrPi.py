@@ -109,73 +109,78 @@ printCosineDistance(0, 2)
 printCosineDistance(0, 3)
 exit()
 
-#result for maugli
-def computeDeltas(referenceIndex):
-    for i in range(0,imageNames.__len__()):
-        if (i != referenceIndex):
-            printCosineDistance(referenceIndex, i)
 
-print("debug info about distances between images in database")
-computeDeltas(0);
-computeDeltas(3);
-print("end debug info")
-def GetTensorForUnknownImage(fileName):
-    #load image
-    im = cv2.imread(fileName)
-    #if dimension of image is not devidable by 14, resize it
-    if (im.shape[0] % 14 != 0 or im.shape[1] % 14 != 0):
-        newWidth = im.shape[1] - (im.shape[1] % 14)
-        newHeight = im.shape[0] - (im.shape[0] % 14)
-        newDim = (newWidth, newHeight)
-        newDim = (224, 168)
-        newDim = (168, 126)
-        im = cv2.resize(im, newDim, interpolation = cv2.INTER_AREA)
-    #transform image to tensor and copy to GPU
-    imArray = [
-        transform(im).unsqueeze(0)
-    ]
-    modelInputBatch = torch.cat(imArray).to(device)
-    #compute output
-    modelOutput = dinov2_vits14_reg(modelInputBatch).cpu()
-    #return tensor
-    return modelOutput[0].detach().numpy()
+camera = cv2.VideoCapture(0)
+camera.set(3,640)
+camera.set(4,480)
+
+detector = cv2.CascadeClassifier(args["cascade"])
+
+directory = "./cats"
+
+# load the input image and convert it to grayscale
+#image = cv2.imread(args["image"])
+lastImageSaveTime = datetime.now()
+while (1):
+	ret, image = camera.read()
+	now = datetime.now()
+	if ret == False:
+		print("Frame is empty")
+		break;
+	else:
+	#	cv2.imshow('VIDEO', image)
+	#	cv2.waitKey(1)
+
+		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+		rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
+		catCount = 0
+# loop over the cat faces and draw a rectangle surrounding each
+		for (i, (x, y, w, h)) in enumerate(rects):
+            #enlarge roundBox by 50%
+            scale = 1.5
+            x = x - (w*scale - w)/2
+            y = y - (h*scale - h)/2
+            if (x < 0):
+                x = 0
+            if (y < 0):
+                y = 0
+            w = w*scale
+            h = h*scale
+            # round w and h to be devidaible by 14, if not round up
+            w = (w//14)*14 + (w%14 > 0)*14
+            h = (h//14)*14 + (h%14 > 0)*14
+
+            startTime = time.time()
+            cropImage = image[y:y+h, x:x+w]
+            input_tensor = preprocess(cropImage).unsqueeze(0)
+            dinoOutput2 = dinov2_vits14_reg(input_tensor)
+            unknownCatTensor = dinoOutput[0].detach().numpy()
+            cosM1 = cosine(unknownCatTensor, resultTensors[0])
+            cosM2 = cosine(unknownCatTensor, resultTensors[1])
+            endTime = time.time()
+            
+            print ("CPU processing time (1 images): ", endTime - startTime)
+
+            message = "Cat #{}, cosDst-m1:{:.3f}, cosDst-m2:{:.3f}".format(i + 1, cosM1, cosM2)
+			cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
+			cv2.putText(image, message, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+			catCount = catCount + 1
+
+#write the image
+#cv2.imwrite('result.jpg', image)
+# show the detected cat faces
+	#	if (catCount > 0):
+		cv2.putText(image, now.strftime("%Y-%m-%d %H:%M:%S"), (20, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+			
+		#cv2.imshow("Cat Faces", image)
+		#cv2.waitKey(1)
+
+		saveImageEnable = ((now - lastImageSaveTime).total_seconds() > 2)
+		if saveImageEnable and (catCount > 0):
+			lastImageSaveTime = now
+			filename = directory + "/" + now.strftime("%Y-%m-%d-%H-%M-%S")+".jpg"
+			cv2.imwrite(filename, image) 
 
 
-def compareUnknownImageToDB(fileName):
-    startTime2 = time.time()
-    unknownTensor = GetTensorForUnknownImage(fileName)
-    for i in range(0,imageNames.__len__()):
-        tensor = cosine(unknownTensor, resultTensors[i])
-        endTime2 = time.time()
-        print ("distance " + fileName + "-" + imageNames[i] + ": " , tensor,  " time: ", endTime2 - startTime2)
 
-print ("compare to unknown images")
-compareUnknownImageToDB("./images/maugli1.jpg")
-compareUnknownImageToDB("./images/maugli2.jpg")
-compareUnknownImageToDB("./images/maugli3.jpg")
-compareUnknownImageToDB("./images/gita1.jpg")
-compareUnknownImageToDB("./images/gita2.jpg")
-
-exit()
-print ("ditance 0-7: ", cosine(resultTensors[0], resultTensors[7]))
-
-exit()
-   # run model
-#output = net(input_batch)
-print("input_batch: ", input_batch.size())
-#top = list(enumerate(output[0].softmax(dim=0)))
-#top.sort(key=lambda x: x[1], reverse=True)
-#for idx, val in top[:10]:
-#    print(f"{val.item()*100:.2f}% {idx}")
-
-with torch.no_grad():
-    output = torch.nn.functional.softmax(resnet50(input_batch), dim=1)
-    
-results = utils.pick_n_best(predictions=output, n=5)
-
-#for  result in zip( results):
-    #img = Image.open(requests.get(uri, stream=True).raw)
-    #img.thumbnail((256,256), Image.ANTIALIAS)
-    #plt.imshow(img)
-    #plt.show()
-    #print(result)
+#cv2.destroyAllWindows()
