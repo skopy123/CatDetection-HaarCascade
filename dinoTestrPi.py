@@ -56,18 +56,18 @@ dinov2_vits14_reg.eval().to(device)
 
 
 preprocess = transforms.Compose([
-    # convert the frame to a CHW torch tensor for training
-    transforms.ToTensor(),
-    # normalize the colors to the range that mobilenet_v2/3 expect
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+	# convert the frame to a CHW torch tensor for training
+	transforms.ToTensor(),
+	# normalize the colors to the range that mobilenet_v2/3 expect
+	transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
 def loadImage(fileName, width, height):
-    dim = (width, height)
-    image1 = cv2.imread(fileName)
-    image1 = cv2.resize(image1, dim, interpolation = cv2.INTER_LINEAR)
-    input_tensor = preprocess(image1)
-    return input_tensor.unsqueeze(0)
+	dim = (width, height)
+	image1 = cv2.imread(fileName)
+	image1 = cv2.resize(image1, dim, interpolation = cv2.INTER_LINEAR)
+	input_tensor = preprocess(image1)
+	return input_tensor.unsqueeze(0)
 
 
 
@@ -75,16 +75,16 @@ imageNames = []
 resultTensors = []
 
 def ComputeTensorForImage(fileName):
-    imageNames.append(fileName)
-    startTime = time.time()
-    modelInput = loadImage(fileName, 224, 224)
-    #compute output
-    dinoOutput = dinov2_vits14_reg(modelInput)#.cpu()
-    print ("output size: ", dinoOutput.size())
-    #print ("output: ", dinoOutput)
-    resultTensors.append(dinoOutput[0].detach().numpy())
-    endTime = time.time()
-    print ("CPU processing time (1 images): ", endTime - startTime)
+	imageNames.append(fileName)
+	startTime = time.time()
+	modelInput = loadImage(fileName, 224, 224)
+	#compute output
+	dinoOutput = dinov2_vits14_reg(modelInput)#.cpu()
+	print ("output size: ", dinoOutput.size())
+	#print ("output: ", dinoOutput)
+	resultTensors.append(dinoOutput[0].detach().numpy())
+	endTime = time.time()
+	print ("CPU processing time (1 images): ", endTime - startTime)
 
 
 #ComputeTensorForImage("./images/cat_01.jpg")
@@ -100,21 +100,19 @@ ComputeTensorForImage("./testImg/gita2.jpg")
 
 #define print function, input is two indexes, it read names from imageNames array and compute cosine distance between coresponding tensors
 def printCosineDistance(index1, index2):
-    print ("distance " + imageNames[index1] + "-" + imageNames[index2] + ": " , cosine(resultTensors[index1], resultTensors[index2]))
+	print ("distance " + imageNames[index1] + "-" + imageNames[index2] + ": " , cosine(resultTensors[index1], resultTensors[index2]))
 
 printCosineDistance(0, 1)
 printCosineDistance(2, 3)
 
 printCosineDistance(0, 2)
 printCosineDistance(0, 3)
-exit()
-
 
 camera = cv2.VideoCapture(0)
 camera.set(3,640)
 camera.set(4,480)
 
-detector = cv2.CascadeClassifier(args["cascade"])
+detector = cv2.CascadeClassifier("haarcascade_frontalcatface.xml")
 
 directory = "./cats"
 
@@ -136,32 +134,32 @@ while (1):
 		catCount = 0
 # loop over the cat faces and draw a rectangle surrounding each
 		for (i, (x, y, w, h)) in enumerate(rects):
-            #enlarge roundBox by 50%
-            scale = 1.5
-            x = x - (w*scale - w)/2
-            y = y - (h*scale - h)/2
-            if (x < 0):
-                x = 0
-            if (y < 0):
-                y = 0
-            w = w*scale
-            h = h*scale
-            # round w and h to be devidaible by 14, if not round up
-            w = (w//14)*14 + (w%14 > 0)*14
-            h = (h//14)*14 + (h%14 > 0)*14
+			#enlarge roundBox by 50%
+			scale = 1.5
+			x = x - (w*scale - w)/2
+			y = y - (h*scale - h)/2
+			if (x < 0):
+				x = 0
+			if (y < 0):
+				y = 0
+			w = w*scale
+			h = h*scale
+			# round w and h to be devidaible by 14, if not round up
+			w = (w//14)*14 + (w%14 > 0)*14
+			h = (h//14)*14 + (h%14 > 0)*14
 
-            startTime = time.time()
-            cropImage = image[y:y+h, x:x+w]
-            input_tensor = preprocess(cropImage).unsqueeze(0)
-            dinoOutput2 = dinov2_vits14_reg(input_tensor)
-            unknownCatTensor = dinoOutput[0].detach().numpy()
-            cosM1 = cosine(unknownCatTensor, resultTensors[0])
-            cosM2 = cosine(unknownCatTensor, resultTensors[1])
-            endTime = time.time()
-            
-            print ("CPU processing time (1 images): ", endTime - startTime)
+			startTime = time.time()
+			cropImage = image[y:y+h, x:x+w]
+			input_tensor = preprocess(cropImage).unsqueeze(0)
+			dinoOutput2 = dinov2_vits14_reg(input_tensor)
+			unknownCatTensor = dinoOutput[0].detach().numpy()
+			cosM1 = cosine(unknownCatTensor, resultTensors[0])
+			cosM2 = cosine(unknownCatTensor, resultTensors[1])
+			endTime = time.time()
+			
+			print ("CPU processing time (1 images): ", endTime - startTime)
 
-            message = "Cat #{}, cosDst-m1:{:.3f}, cosDst-m2:{:.3f}".format(i + 1, cosM1, cosM2)
+			message = "Cat #{}, cosDst-m1:{:.3f}, cosDst-m2:{:.3f}".format(i + 1, cosM1, cosM2)
 			cv2.rectangle(image, (x, y), (x + w, y + h), (0, 0, 255), 2)
 			cv2.putText(image, message, (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
 			catCount = catCount + 1
