@@ -44,6 +44,8 @@ nosetests.xml
 coverage.xml
 *,cover
 .hypothesis/
+#videos
+*.mp4
 
 # Translations
 *.mo

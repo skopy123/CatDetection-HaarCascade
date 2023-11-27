@@ -132,7 +132,8 @@ for i in range(0,imageNames.__len__()):
     knownCatsTensors.append(dinoOutput[i].detach().numpy())
 endTime = time.time()
 print ("GPU processing time (5 images): ", endTime - startTime)
-
+np.save("knownCatsTensors.npy", knownCatsTensors);
+exit()
 #print ("dinoOutput: ", transformedOutput)
 
 
