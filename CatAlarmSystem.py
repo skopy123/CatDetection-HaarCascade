@@ -15,6 +15,7 @@ from torch.nn.functional import normalize
 from tqdm import tqdm
 from scipy.spatial.distance import cosine
 from cat_info import CatInfo
+from pushbullet import API as pbApi
 
 baseFolder = "./images/"
 
@@ -51,6 +52,11 @@ def computeDistance(catInfo1, catInfo2):
 
 def printDistance(catInfo1, catInfo2):
     print("Distance between ", catInfo1.ShortDescription(), " and ", catInfo2.ShortDescription(), " is ", computeDistance(catInfo1, catInfo2))
+
+pushBulletApi = pbApi()
+pushBulletApi.set_token("o.W1XnsL76ftQKbpBF9USPeJcnGQQ4TMzx")
+pushBulletApi.send_note("Cat alarm", "startup")
+
 
 #order array by catName
 catInfoArray.sort(key=lambda x: x.catName, reverse=False)
@@ -161,18 +167,8 @@ print ("compare to unknown images")
 #haar detector
 detector = cv2.CascadeClassifier("haarcascade_frontalcatface.xml")
 
-videoFilePath = "D:/temp/cam-kocky/20231125_130743_tp00001.mp4"
-cv2VideoF = cv2.VideoCapture(videoFilePath)
-timeInVideo = "18:00"#mm:ss
-timeMs = int(timeInVideo.split(":")[0]) * 60 * 1000 + int(timeInVideo.split(":")[1]) * 1000
-firstFrame = int(timeInVideo.split(":")[0]) * 60  + int(timeInVideo.split(":")[1])
-firstFrame = firstFrame*15
-cv2VideoF.set(cv2.CAP_PROP_POS_MSEC, timeMs)
-#read 10 frames and call compareVideoFrameToDB
 
-fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-outputVideoWrite = cv2.VideoWriter('output.mp4', fourcc, 15.0, (1280,720))
-
+lastNotificationTime = time.time() - 60
 
 def compareVideoFrameToDB(im, frameNumber):
     unknownTensor = GetTensorForUnknownImage(im)
@@ -204,6 +200,13 @@ def compareVideoFrameToDB(im, frameNumber):
     pos = (20, im.shape[0] - 20)
     text = "closest match:" +catInfoArray[minDistIndex].ShortDescription() + " dist:" + f"{minDist:.2f}"
     cv2.putText(im, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+    #send notification if distance to maugli is less than 0.5
+
+    global lastNotificationTime
+  #  if (minDist < 0.3) and (catInfoArray[minDistIndex].catName == "maugli") and ((time.time() - lastNotificationTime) > 60):
+    if (minDist < 0.3) and ((time.time() - lastNotificationTime) > 60):
+        lastNotificationTime = time.time()
+        pushBulletApi.send_note("Cat alarm", "Cat detected: " + catInfoArray[minDistIndex].catName + " dist:" + f"{minDist:.2f}")
 
 
 def InsertDetectedCatsIntoImage(im, rects):
@@ -211,40 +214,73 @@ def InsertDetectedCatsIntoImage(im, rects):
         cv2.rectangle(im, (x, y), (x + w, y + h), (0, 0, 255), 2)
         cv2.putText(im, "Cat #{}".format(i + 1), (x, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
 
-startTime = time.time()
-frameCount = 500
+
 
 
 catCounterFIRfilter = [0, 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0, 0, 0, 0, 0, 0 ,0 ,0 ,0 ,0 ,0]
-lastNotificationTime = time.time() - 60
 
+
+
+def processFrame(im, frameNumber):
+    scale = 0.33
+    newWidth = int(frame.shape[1])        
+    newHeight = int(frame.shape[0])
+    newDim = (newWidth, newHeight)
+    gray = cv2.cvtColor(cv2.resize(frame, newDim, interpolation = cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
+    rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
+    catCount = rects.__len__()
+        #FIR filter
+    catCounterFIRfilter.pop(0)
+    if (catCount > 0):
+        catCounterFIRfilter.append(1)
+    else:
+        catCounterFIRfilter.append(0)
+    filterOutValue = sum(catCounterFIRfilter)/len(catCounterFIRfilter)
+    if (catCount > 0) or (filterOutValue > 0.05):
+        compareVideoFrameToDB(frame,i)
+    if (catCount > 0):
+        InsertDetectedCatsIntoImage(frame, rects)
+        #cv2.imshow("Cat video", frame)
+        #cv2.waitKey(1)
+    outputVideoWrite.write(frame)
+#output video stream
+outputVideoWrite = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 15.0, (1280,720))
+
+#stream
+netstream = cv2.VideoCapture('rtsp://maugli:vetrelec1@192.168.129.198:554/stream1')
+
+frameCounter  = 0
+while (1):
+    ret, frame = netstream.read()
+    if ret == False:
+        print("Frame is empty")
+        break
+    else:
+        processFrame(frame, i)
+        cv2.imshow('liveStream', frame)
+        cv2.waitKey(1)
+        frameCounter += 1
+
+outputVideoWrite.release()
+exit()
+
+
+
+videoFilePath = "D:/temp/cam-kocky/20231125_130743_tp00001.mp4"
+cv2VideoF = cv2.VideoCapture(videoFilePath)
+timeInVideo = "18:00"#mm:ss
+timeMs = int(timeInVideo.split(":")[0]) * 60 * 1000 + int(timeInVideo.split(":")[1]) * 1000
+firstFrame = int(timeInVideo.split(":")[0]) * 60  + int(timeInVideo.split(":")[1])
+firstFrame = firstFrame*15
+cv2VideoF.set(cv2.CAP_PROP_POS_MSEC, timeMs)
+#read 10 frames and call compareVideoFrameToDB
+
+startTime = time.time()
+frameCount = 2500
 for i in range(frameCount):
     ret, frame = cv2VideoF.read()
     if ret:
-        scale = 0.33
-        newWidth = int(frame.shape[1])        
-        newHeight = int(frame.shape[0])
-        newDim = (newWidth, newHeight)
-        gray = cv2.cvtColor(cv2.resize(frame, newDim, interpolation = cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
-        rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
-        catCount = rects.__len__()
-
-        #FIR filter
-        catCounterFIRfilter.pop(0)
-        if (catCount > 0):
-            catCounterFIRfilter.append(1)
-        else:
-            catCounterFIRfilter.append(0)
-        filterOutValue = sum(catCounterFIRfilter)/len(catCounterFIRfilter)
-
-        if (catCount > 0) or (filterOutValue > 0.05):
-            compareVideoFrameToDB(frame,i)
-        if (catCount > 0):
-            InsertDetectedCatsIntoImage(frame, rects)
-        #cv2.imshow("Cat video", frame)
-        #cv2.waitKey(1)
-        outputVideoWrite.write(frame)
-
+        processFrame(frame, i) 
     else:
         print("end of video")
         break
