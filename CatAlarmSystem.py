@@ -17,7 +17,7 @@ from scipy.spatial.distance import cosine
 from cat_info import CatInfo
 from pushbullet import API as pbApi
 
-baseFolder = "./images/"
+baseFolder = "./templates/"
 
 print("Cat recognition system")
 
