@@ -3,14 +3,14 @@ import json
 import cv2
 import os
 import torch
-import torch_directml
+#import torch_directml
 import time
 import numpy as np
 from torchvision import models,transforms
 
 import torch.nn as nn
 
-from torchvision.models import resnet50
+#from torchvision.models import resnet50
 from torch.nn.functional import normalize
 from tqdm import tqdm
 from scipy.spatial.distance import cosine
@@ -95,7 +95,7 @@ print("")
 
 
 #use GPU to speed up
-dmlDevice = torch_directml.device()
+dmlDevice = "cpu"#torch_directml.device()
 print("torch version: ", torch.__version__)
 print(f'Using device {dmlDevice} for inference')
 
@@ -227,8 +227,8 @@ def processFrame(im, frameNumber):
     newHeight = int(frame.shape[0])
     newDim = (newWidth, newHeight)
     gray = cv2.cvtColor(cv2.resize(frame, newDim, interpolation = cv2.INTER_AREA), cv2.COLOR_BGR2GRAY)
-    rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
-    catCount = rects.__len__()
+    #rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
+    catCount = 1#rects.__len__()
         #FIR filter
     catCounterFIRfilter.pop(0)
     if (catCount > 0):
@@ -239,16 +239,16 @@ def processFrame(im, frameNumber):
     if (catCount > 0) or (filterOutValue > 0.05):
         compareVideoFrameToDB(frame,i)
     if (catCount > 0):
-        InsertDetectedCatsIntoImage(frame, rects)
-        #cv2.imshow("Cat video", frame)
-        #cv2.waitKey(1)
-    outputVideoWrite.write(frame)
+        #InsertDetectedCatsIntoImage(frame, rects)
+        cv2.imshow("Cat video", frame)
+        cv2.waitKey(1)
+    #outputVideoWrite.write(frame)
 #output video stream
-outputVideoWrite = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 15.0, (1280,720))
+#outputVideoWrite = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 15.0, (1280,720))
 
 #stream
 netstream = cv2.VideoCapture('rtsp://maugli:vetrelec1@192.168.129.198:554/stream1')
-
+startT = time.time()
 frameCounter  = 0
 while (1):
     ret, frame = netstream.read()
@@ -257,11 +257,16 @@ while (1):
         break
     else:
         processFrame(frame, i)
-        cv2.imshow('liveStream', frame)
-        cv2.waitKey(1)
+        #cv2.imshow('liveStream', frame)
+        #cv2.waitKey(1)
         frameCounter += 1
+        if (frameCounter % 100 == 0):
+            ensT = time.time()
+            print("FPS: ", frameCounter/(ensT - startT))
+            frameCount = 0
+            startT = time.time()
 
-outputVideoWrite.release()
+#outputVideoWrite.release()
 exit()
 
 
