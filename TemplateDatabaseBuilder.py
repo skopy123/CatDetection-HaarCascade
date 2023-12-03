@@ -18,15 +18,20 @@ from scipy.spatial.distance import cosine
 from cat_info import CatInfo
 
 
-print("Cat database builder - this program computes tensors from template images and store them in file")
+print("Cat template database builder - this program computes tensors from template images and store them in file")
+
+#BASIC SETTINGS
+useModelWithReg = True
+useColorNormalization = True
+
+baseFolder = "./templates/"
+colorImagesFolder = baseFolder + "DayTemplates/"
+NightVisionImagesFolder = baseFolder + "NightTemplates/"
 
 #use GPU to speed up
 dmlDevice = "cpu"#torch_directml.device()
 print("torch version: ", torch.__version__)
 print(f'Using device {dmlDevice} for inference')
-
-useModelWithReg = True
-useColorNormalization = True
 
 #load medium size dinov2 model
 if useModelWithReg:
@@ -35,11 +40,6 @@ else:
     dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
 dinov2_vitb14_reg.eval().to(dmlDevice)
 
-baseFolder = "./images/"
-colorImagesFolder = baseFolder + "DayTemplates/"
-NightVisionImagesFolder = baseFolder + "NightTemplates/"
-
-
 #crate array of CatInfo objects
 catInfoArray = []
 for fileName in os.listdir(colorImagesFolder):
@@ -47,6 +47,7 @@ for fileName in os.listdir(colorImagesFolder):
 for fileName in os.listdir(NightVisionImagesFolder):
     catInfoArray.append(CatInfo.FromFilePath(NightVisionImagesFolder, fileName))
 
+#compute tensor for one cat
 def computeTensorForCat(catInfo):
     #compute output
     dinoInput = catInfo.GetModelInputTensor(useColorNormalization).to(dmlDevice)
@@ -60,27 +61,6 @@ def computeTensorForCat(catInfo):
 
     catInfo.outputTensor = outputMainMem[0].detach().numpy()
     #print ("output size: ", catInfo.outputTensor.size())
-
-#test
-#computeTensorForCat(catInfoArray[0])
-#print ("output size: ", catInfoArray[0].outputTensor.size)
-#print ("output: ", catInfoArray[0].outputTensor)
-#with open("test.json", 'w') as outfile:
-##    outfile.write("[")
-#    outfile.write(catInfoArray[0].ToJson())
-#    outfile.write("]")
-#print("file written")
-
-#catInfoArray = []
-#with open("test.json") as json_file:
-#    jsonArr = json.load(json_file)
-#    for jsonObj in jsonArr:
-##       print("loaded cat info:")
-#        print (ci.ShortDescription(), " length ", len(ci.outputTensor))
-#        print ("output: ", ci.outputTensor)
-
-
-#exit()
 
 #compute tensors for all cats
 for catInfo in catInfoArray:
