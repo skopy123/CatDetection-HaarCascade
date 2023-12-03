@@ -39,6 +39,8 @@ while (1):
 		print("Frame is empty")
 		break;
 	else:
+		cv2.GaussianBlur(image, (7, 7), 0) 
+
 		cv2.imshow('VIDEO', image)
 		cv2.waitKey(1)
 

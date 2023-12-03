@@ -1,40 +1,30 @@
-import argparse
-import base64
-import json
-import cv2
 import os
 import torch
-import torch_directml
-import time
-import numpy as np
 from torchvision import models,transforms
-
 import torch.nn as nn
-
-from torchvision.models import resnet50
 from torch.nn.functional import normalize
 from tqdm import tqdm
 from scipy.spatial.distance import cosine
-from cat_info import CatInfo
 
+from cat_info import CatInfo
 
 print("Cat template database builder - this program computes tensors from template images and store them in file")
 
 #BASIC SETTINGS
-useModelWithReg = True
-useColorNormalization = True
-
-baseFolder = "./templates/"
-colorImagesFolder = baseFolder + "DayTemplates/"
-NightVisionImagesFolder = baseFolder + "NightTemplates/"
+import modSettings as settings
+colorImagesFolder = settings.baseFolder + "DayTemplates/"
+NightVisionImagesFolder = settings.baseFolder + "NightTemplates/"
 
 #use GPU to speed up
-dmlDevice = "cpu"#torch_directml.device()
+dmlDevice = "cpu"
+if (settings.useDirectML):
+    import torch_directml
+    dmlDevice = torch_directml.device()
 print("torch version: ", torch.__version__)
 print(f'Using device {dmlDevice} for inference')
 
 #load medium size dinov2 model
-if useModelWithReg:
+if settings.useModelWithReg:
     dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14_reg')
 else:
     dinov2_vitb14_reg = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
@@ -50,7 +40,7 @@ for fileName in os.listdir(NightVisionImagesFolder):
 #compute tensor for one cat
 def computeTensorForCat(catInfo):
     #compute output
-    dinoInput = catInfo.GetModelInputTensor(useColorNormalization).to(dmlDevice)
+    dinoInput = catInfo.GetModelInputTensor(settings.useColorNormalization).to(dmlDevice)
     dinoOutput = dinov2_vitb14_reg(dinoInput)
     outputMainMem = dinoOutput.cpu()
     #get image size
@@ -66,10 +56,10 @@ def computeTensorForCat(catInfo):
 for catInfo in catInfoArray:
     computeTensorForCat(catInfo)
 #save cat info array to file
-outputFileName = baseFolder + "catsDB" 
-if useColorNormalization:
+outputFileName = settings.baseFolder + "catsDB" 
+if settings.useColorNormalization:
     outputFileName += "_wCN"
-if useModelWithReg:
+if settings.useModelWithReg:
     outputFileName += "_wReg"
 outputFileName += ".json"
 with open(outputFileName, 'w') as outfile:
@@ -82,14 +72,6 @@ with open(outputFileName, 'w') as outfile:
             outfile.write(",")
         outfile.write(catInfo.ToJson())
     outfile.write("]")
-
-#cv2.imshow('test cat', catInfoArray[1].image)
-#cv2.waitKey(5)
-#prin all cat info
-#for catInfo in catInfoArray:
-#    print(catInfo.ToString())
-
-#save cat info array to file
 
 
 
