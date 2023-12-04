@@ -26,9 +26,14 @@ def putImageIntoProcessPipeline(image: cv2.typing.MatLike):
     global motionDetected
     mm = GetMotionMask(image)
     nonZero = np.count_nonzero(mm)
-    if (nonZero > 500):
+    if (nonZero > 600):
         motionDetected = True
         print("motion detected, nonZero pixels: ", nonZero)
-        #cv2.imshow('motion detected', image)
+        cv2.imshow('motion detected', mm)
+        cv2.waitKey(1)
+    else:
+        motionDetected = False
+        #print("no motion detected, nonZero pixels: ", nonZero)
+        #cv2.imshow('no motion detected', image)
         #cv2.waitKey(1)
 

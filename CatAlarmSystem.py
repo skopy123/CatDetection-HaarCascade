@@ -32,9 +32,15 @@ import modHaarCascade as catHaarCascade
 
 print("Cat recognition system")
 
+aiProcessedFrames = 0
+aiProcessingTime = 0
+
 def processFrame(im:cv2.typing.MatLike, frameNumber:int):
-    if (frameNumber % 5 > 0):
+    if (frameNumber % 10 > 0):
         return
+    print("processing frame: ", frameNumber)
+    global aiProcessedFrames
+    global aiProcessingTime
     #stage1 getGrayScaleImage
     gray, nvMode = imageTools.ConvertToGrayScaleIfNecessary(im)
 
@@ -44,13 +50,16 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
         return #no motion detected, skip rest of the processing
     
     #stage2 haar cascade detection
-    catHaarCascade.PutImageIntoProcessPipeline(gray)
-    if (catHaarCascade.catPresenceFiltred == False):
+    #catHaarCascade.PutImageIntoProcessPipeline(gray)
+    #if (catHaarCascade.catPresenceFiltred == False):
         #return
-        print("movement detected bud haar cascade(filtrated) do not find cat")
+       #print("movement detected bud haar cascade(filtrated) do not find cat")
 
     #stage3 compare to DB
-    scaledImagae = image2Tensor.ResizeImageToModelInput(im,14*15)
+    aiBeginTime = time.time()
+    scaledImagae = image2Tensor.ResizeImageToModelInput(im,14*14)
+    # cut left 50 pixels from image
+    scaledImagae = scaledImagae[:,42:,:]
     #print scaled image size
     height, width, channels = scaledImagae.shape
     print (f"procssing image, dimension:{height}x{width}")
@@ -65,10 +74,13 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
     cv2.imshow("Cat video", frame)
     cv2.waitKey(1)
 
+    aiEndTime = time.time()
+    aiProcessingTime = aiProcessingTime + (aiEndTime - aiBeginTime)
+    aiProcessedFrames = aiProcessedFrames + 1
     #eval results
-    if (catMatches[0].DistanceToTemplatesMin < 0.3):
+    if (catMatches[0].DistanceToTemplatesMin < catMatches[0].DistanceToTemplatesMin):
         print("cat detected: ", catMatches[0].Name, "dist: ", catMatches[0].DistanceToTemplatesMin)
-        if (catMatches[0].Name == "maugli"):
+        if (catMatches[0].Name == "Maugli"):
             pb.SendNotificationWithRateLimiter("Cat alarm", "Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
 
     #outputVideoWrite.write(frame)
@@ -83,19 +95,26 @@ frameCounter  = 0
 while (1):
     try:
         ret, frame = netstream.read()
-        if ret == False:
+        if not ret:
             print("Frame is empty")
-            time.sleep(0.5)
-        else:
-            frameCounter =  frameCounter + 1
+            time.sleep(0.1)
+            continue
+        
+        while True:
+            ret_new, frame_new = netstream.read()
+            if not ret_new:
+                break
+            else:
+                frame = frame_new
+
+        frameCounter =  frameCounter + 1
             
-            processFrame(frame, frameCounter)
+        processFrame(frame, frameCounter)
             
-            if (frameCounter % 100 == 0):
-                ensT = time.time()
-                print("FPS: ", frameCounter/(ensT - startT))
-                frameCount = 0
-                startT = time.time()
+        if (frameCounter % 100 == 0):   
+            ensT = time.time()
+            print("total avg FPS: ", frameCounter/(ensT - startT))
+            print("AI avg FPS: ", aiProcessedFrames/aiProcessingTime)
 
     except Exception as e:
         print("Error in processFrame")
