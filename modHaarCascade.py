@@ -6,12 +6,12 @@ import time
 detector = cv2.CascadeClassifier("haarcascade_frontalcatface.xml")
 
 firFilterLength = 20
-catCounterFIRfilter = np.zeros(firFilterLength)
+catCounterFIRfilter = [0] * firFilterLength
 
 lastImageCatCount = -1
 lastImageTime = time.time()
 lastImageCatsBoundingBoxes = []
-catPresetnFiltred = False
+catPresenceFiltred = False
 
 
 #input image must be grayscale, retuns array of bounding boxes
@@ -26,7 +26,7 @@ def PutImageIntoProcessPipeline(image):
     global lastImageTime
     global lastImageCatsBoundingBoxes
     global catCounterFIRfilter
-    global catPresetnFiltred
+    global catPresenceFiltred
     lastImageCatsBoundingBoxes = DetectCatFaces(image)
     lastImageCatCount = lastImageCatsBoundingBoxes.__len__()
     lastImageTime = time.time()
@@ -40,7 +40,7 @@ def PutImageIntoProcessPipeline(image):
         catCounterFIRfilter.append(0)
     filterOutValue = sum(catCounterFIRfilter)/len(catCounterFIRfilter)
 
-    catPresetnFiltred = ((lastImageCatCount > 0) or (filterOutValue > 0.05))
+    catPresenceFiltred = ((lastImageCatCount > 0) or (filterOutValue > 0.05))
 
 def AddBoundingBoxesIntoImage(image):
     for (i, (x, y, w, h)) in enumerate(lastImageCatsBoundingBoxes):

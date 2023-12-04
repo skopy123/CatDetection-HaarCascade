@@ -29,8 +29,10 @@ def DetectNigthVision(image):
 def ConvertToGrayScale(image):
     return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-def ConvertToGrayScaleIfNecessary(image):
-    if DetectNigthVision(image):
-        return ConvertToGrayScale(image)
+
+def ConvertToGrayScaleIfNecessary(image: cv2.typing.MatLike) -> tuple[cv2.typing.MatLike, bool]:
+    nv = DetectNigthVision(image)
+    if (nv == False):
+        return (ConvertToGrayScale(image), False)
     else:
-        return image
+        return (image, True)

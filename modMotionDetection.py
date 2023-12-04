@@ -7,7 +7,7 @@ LEARNING_RATE = -1
 fgbg = cv2.createBackgroundSubtractorKNN()
 
 #image should be grayscale
-def GetMotionMask(image):    
+def GetMotionMask(image: cv2.typing.MatLike):    
     blur = cv2.GaussianBlur(image, (7, 7), 0) 
     #cv2.imshow('frame', frame)
     # black out polygon area with time and non interesting area
@@ -21,7 +21,8 @@ def GetMotionMask(image):
 
 motionDetected = False
 
-def putImageIntoProcessPipeline(image):
+#image should be grayscale
+def putImageIntoProcessPipeline(image: cv2.typing.MatLike):
     global motionDetected
     mm = GetMotionMask(image)
     nonZero = np.count_nonzero(mm)

@@ -6,12 +6,13 @@
 import os
 import json
 import numpy as np
+import cv2
 
 from scipy.spatial.distance import cosine
 from cat_info import CatInfo
 from catMatchStats import CatMatchStats
 import modSettings as settings
-
+from typing import List
 
 print("Loading Cat Templates database")
 
@@ -63,7 +64,7 @@ def printDatabaseStats():
     print("Stats for night vision mode:")
     printDatabaseStatsSingleSet(catInfoArrayNightMode)
 
-
+#this print stats about cross corelation between different templates in DB
 def printDatabaseStatsSingleSet(catInfos):
     print("  Number of cats template: ", len(catInfos))
 
@@ -97,8 +98,9 @@ def printDatabaseStatsSingleSet(catInfos):
     print("")
     print("")
 
-def compareUnknownTensorToDB(unknownTensor, nvMode):
+def CompareUnknownTensorToDB(unknownTensor, nvMode: bool):
     #prepare results collection
+    #results = [CatMatchStats()] * totalCatCount
     results = []
     for i in range(0,totalCatCount):
         cms = CatMatchStats()
@@ -122,4 +124,18 @@ def compareUnknownTensorToDB(unknownTensor, nvMode):
         results[i].DistanceToTemplatesAvg = sum(results[i].DistanceToTemplates) / len(results[i].DistanceToTemplates)
 
     #sort results by distance
-    return results.sort(key=lambda x: x.DistanceToTemplatesAvg, reverse=True)
+    results.sort(key=lambda x: x.DistanceToTemplatesAvg, reverse=True)
+    return results
+
+#add text to image
+def AddStatsIntoImage(im: cv2.typing.MatLike, matchStats: List[CatMatchStats]) :
+        #add text to low left corner
+    for i in range(0,matchStats.__len__()):
+        cms = matchStats[i]
+        #format avg and min distance to 2 decimal places
+        text = cms.Name + " avg:" + f"{cms.DistanceToTemplatesAvg:.2f}" + " min:" + f"{cms.DistanceToTemplatesMin:.2f}"
+        pos = (20, im.shape[0] - 20 - 20 * (i+1))
+        cv2.putText(im, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
+    pos = (20, im.shape[0] - 20)
+    text = "closest match:" + cms.Name + " dist:" + f"{cms.DistanceToTemplatesMin:.2f}"
+    cv2.putText(im, text, pos, cv2.FONT_HERSHEY_SIMPLEX, 0.55, (0, 0, 255), 2)
