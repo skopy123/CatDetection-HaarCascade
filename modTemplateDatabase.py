@@ -124,7 +124,7 @@ def CompareUnknownTensorToDB(unknownTensor, nvMode: bool):
         results[i].DistanceToTemplatesAvg = sum(results[i].DistanceToTemplates) / len(results[i].DistanceToTemplates)
 
     #sort results by distance
-    results.sort(key=lambda x: x.DistanceToTemplatesAvg, reverse=True)
+    results.sort(key=lambda x: x.DistanceToTemplatesAvg, reverse=False)
     return results
 
 #add text to image

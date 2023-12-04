@@ -6,6 +6,8 @@ import cv2
 import os
 import time
 import traceback
+import threading
+import queue
 
 #vision and ML
 import torch
@@ -71,56 +73,84 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
     if (catHaarCascade.lastImageCatCount > 0):
         catHaarCascade.AddBoundingBoxesIntoImage(im)
     #show image
-    cv2.imshow("Cat video", frame)
+    cv2.imshow("Cat video", im)
     cv2.waitKey(1)
 
     aiEndTime = time.time()
     aiProcessingTime = aiProcessingTime + (aiEndTime - aiBeginTime)
     aiProcessedFrames = aiProcessedFrames + 1
     #eval results
-    if (catMatches[0].DistanceToTemplatesMin < catMatches[0].DistanceToTemplatesMin):
+    if (catMatches[0].DistanceToTemplatesMin < 0.3):
         print("cat detected: ", catMatches[0].Name, "dist: ", catMatches[0].DistanceToTemplatesMin)
         if (catMatches[0].Name == "Maugli"):
-            pb.SendNotificationWithRateLimiter("Cat alarm", "Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
+            pb.SendNotificationWithRateLimiter("Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
 
     #outputVideoWrite.write(frame)
 #output video stream
 #outputVideoWrite = cv2.VideoWriter('output.mp4', cv2.VideoWriter_fourcc(*'mp4v'), 15.0, (1280,720))
 
 #stream
+frame_queue = queue.Queue()
 
-netstream = cv2.VideoCapture(os.getenv("RSTP_STREAM"))
-startT = time.time()
-frameCounter  = 0
-while (1):
-    try:
+def read_frames():
+    netstream = cv2.VideoCapture(os.getenv("RSTP_STREAM"))
+    readframeCounter = 0
+    chunkFrameStart = 0
+    chunkTimeStart = time.time()
+    while True:
         ret, frame = netstream.read()
         if not ret:
             print("Frame is empty")
-            time.sleep(0.1)
+            time.sleep(0.5)
             continue
-        
-        while True:
-            ret_new, frame_new = netstream.read()
-            if not ret_new:
-                break
-            else:
-                frame = frame_new
+        # Put the frame into the queue
+        readframeCounter = readframeCounter + 1
+        frame_queue.put(frame)
+        if (readframeCounter % 100 == 0):
+            chunkFrameEnd = readframeCounter
+            chunkTimeEnd = time.time()
+            print("netstream read: ", (chunkFrameEnd - chunkFrameStart)/(chunkTimeEnd - chunkTimeStart), " FPS: ")
+            chunkFrameStart = chunkFrameEnd
+            chunkTimeStart = chunkTimeEnd
 
-        frameCounter =  frameCounter + 1
-            
-        processFrame(frame, frameCounter)
-            
-        if (frameCounter % 100 == 0):   
-            ensT = time.time()
-            print("total avg FPS: ", frameCounter/(ensT - startT))
-            print("AI avg FPS: ", aiProcessedFrames/aiProcessingTime)
+read_thread = threading.Thread(target=read_frames)
+read_thread.start()
 
-    except Exception as e:
-        print("Error in processFrame")
-        print(str(e))  # Print the error message
-        traceback.print_exc()  # Print the full traceback
-        time.sleep(5)
+
+
+
+
+
+def process_framesFromQueue():
+    readFrameCounter = 0
+    startT = time.time()
+    while (1):
+        try:
+            #get most recent image from queue and throw away all older images
+            while (frame_queue.qsize() > 1):
+                frame_queue.get()
+            frame = frame_queue.get(True,3)
+
+            readFrameCounter =  readFrameCounter + 1
+            
+            processFrame(frame, readFrameCounter)
+            
+            if (readFrameCounter % 100 == 0):   
+                ensT = time.time()
+                print("read avg FPS: ", readFrameCounter/(ensT - startT))
+                print("AI avg FPS: ", aiProcessedFrames/aiProcessingTime)
+
+        except Exception as e:
+            print("Error in processFrame")
+            print(str(e))  # Print the error message
+            traceback.print_exc()  # Print the full traceback
+            time.sleep(5)
+process_thread = threading.Thread(target=process_framesFromQueue)
+process_thread.start()
+
+# Wait for both threads to finish
+read_thread.join()
+process_thread.join()
 
 
 #videoFilePath = "D:/temp/cam-kocky/20231125_130743_tp00001.mp4"
