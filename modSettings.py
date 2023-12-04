@@ -3,6 +3,6 @@ load_dotenv()
 
 useModelWithReg = True
 useColorNormalization = True
-useDirectML = True
+useDirectML = False
 
 baseFolder = "./templates/"

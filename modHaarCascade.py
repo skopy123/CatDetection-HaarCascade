@@ -16,8 +16,8 @@ catPresenceFiltred = False
 
 #input image must be grayscale, retuns array of bounding boxes
 def DetectCatFaces(image):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    rects = detector.detectMultiScale(gray, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
+    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    rects = detector.detectMultiScale(image, scaleFactor=1.3,minNeighbors=10, minSize=(75, 75))
     return rects
 
 #image must be grayscale

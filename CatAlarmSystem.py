@@ -40,8 +40,8 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
 
     #stage1 - motion detection
     motionDetection.putImageIntoProcessPipeline(gray)
-    #if (motionDetection.motionDetected == False):
-    #    return #no motion detected, skip rest of the processing
+    if (motionDetection.motionDetected == False):
+        return #no motion detected, skip rest of the processing
     
     #stage2 haar cascade detection
     catHaarCascade.PutImageIntoProcessPipeline(gray)

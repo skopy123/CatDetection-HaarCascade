@@ -18,7 +18,7 @@ def DetectNigthVision(image):
     ### finding ratio of diff_sum with respect to size of image
     ratio=diff_sum/image.size
 
-    print("ratio: ", ratio)
+    #print("ratio: ", ratio)
     if ratio>0.1:
         #print("image is color")
         return False
@@ -32,6 +32,7 @@ def ConvertToGrayScale(image):
 
 def ConvertToGrayScaleIfNecessary(image: cv2.typing.MatLike) -> tuple[cv2.typing.MatLike, bool]:
     nv = DetectNigthVision(image)
+    return (ConvertToGrayScale(image), nv)
     if (nv == False):
         return (ConvertToGrayScale(image), False)
     else:
