@@ -37,6 +37,8 @@ print("Cat recognition system")
 aiProcessedFrames = 0
 aiProcessingTime = 0
 
+stop_threads = False
+
 def processFrame(im:cv2.typing.MatLike, frameNumber:int):
     if (frameNumber % 10 > 0):
         return
@@ -97,7 +99,7 @@ def read_frames():
     readframeCounter = 0
     chunkFrameStart = 0
     chunkTimeStart = time.time()
-    while True:
+    while not stop_threads:
         ret, frame = netstream.read()
         if not ret:
             print("Frame is empty")
@@ -117,14 +119,10 @@ read_thread = threading.Thread(target=read_frames)
 read_thread.start()
 
 
-
-
-
-
 def process_framesFromQueue():
     readFrameCounter = 0
     startT = time.time()
-    while (1):
+    while not stop_threads:
         try:
             #get most recent image from queue and throw away all older images
             while (frame_queue.qsize() > 1):
@@ -145,19 +143,16 @@ def process_framesFromQueue():
             print(str(e))  # Print the error message
             traceback.print_exc()  # Print the full traceback
             time.sleep(5)
+            
 process_thread = threading.Thread(target=process_framesFromQueue)
 process_thread.start()
 
-# Wait for both threads to finish
-read_thread.join()
-process_thread.join()
-
-
-#videoFilePath = "D:/temp/cam-kocky/20231125_130743_tp00001.mp4"
-#cv2VideoF = cv2.VideoCapture(videoFilePath)
-#timeInVideo = "18:00"#mm:ss
-#timeMs = int(timeInVideo.split(":")[0]) * 60 * 1000 + int(timeInVideo.split(":")[1]) * 1000
-#firstFrame = int(timeInVideo.split(":")[0]) * 60  + int(timeInVideo.split(":")[1])
-#firstFrame = firstFrame*15
-#cv2VideoF.set(cv2.CAP_PROP_POS_MSEC, timeMs)
-#read 10 frames and call compareVideoFrameToDB
+try:
+    while True:
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    print('Stopping... wait for threads to finish')
+    stop_threads = True
+    read_thread.join()
+    process_thread.join()
+    print('all Threads finished, exiting')
