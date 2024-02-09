@@ -35,7 +35,8 @@ pip install python-dotenv
 
 
 ## Result
-![](https://github.com/haribaskar/CatDetection-HaarCascade/blob/master/result.jpg)
+![](https://github.com/skopy123/CatDetection-HaarCascade/blob/master/testImg/detectionResulst.jpg)
+
 
 
 
