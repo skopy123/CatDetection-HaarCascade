@@ -31,6 +31,7 @@ import modPushBulletWrapper as pb
 import modMotionDetection as motionDetection
 import modImageTools as imageTools
 import modHaarCascade as catHaarCascade
+import modhaHttpSensorPush as haApi
 
 print("Cat recognition system")
 
@@ -51,6 +52,7 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
     #stage1 - motion detection
     motionDetection.putImageIntoProcessPipeline(gray)
     if (motionDetection.motionDetected == False):
+        haApi.HaPostSensorValueWithRateLimiter("noMotion", "http://hassio.lan:8124")
         return #no motion detected, skip rest of the processing
     
     #stage2 haar cascade detection
@@ -84,8 +86,15 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
     #eval results
     if (catMatches[0].DistanceToTemplatesMin < 0.3):
         print("cat detected: ", catMatches[0].Name, "dist: ", catMatches[0].DistanceToTemplatesMin)
+        haApi.HaPostSensorValue(catMatches[0].Name, "http://hassio.lan:8124")
         if (catMatches[0].Name == "Maugli"):
             pb.SendNotificationWithRateLimiter("Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
+    else
+        if (catMatches[0].DistanceToTemplatesMin < 0.5):
+            haApi.HaPostSensorValue("Unconfirmed:"catMatches[0].Name, "http://hassio.lan:8124")
+        else
+            haApi.HaPostSensorValue("noCat", "http://hassio.lan:8124")
+
 
     #outputVideoWrite.write(frame)
 #output video stream
