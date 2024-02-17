@@ -89,10 +89,10 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
         haApi.HaPostSensorValue(catMatches[0].Name, "http://hassio.lan:8124")
         if (catMatches[0].Name == "Maugli"):
             pb.SendNotificationWithRateLimiter("Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
-    else
+    else:
         if (catMatches[0].DistanceToTemplatesMin < 0.5):
             haApi.HaPostSensorValue("Unconfirmed:"catMatches[0].Name, "http://hassio.lan:8124")
-        else
+        else:
             haApi.HaPostSensorValue("noCat", "http://hassio.lan:8124")
 
 
