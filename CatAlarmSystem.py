@@ -104,25 +104,53 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
 frame_queue = queue.Queue()
 
 def read_frames():
-    netstream = cv2.VideoCapture(os.getenv("RSTP_STREAM"))
+    stream_url = os.getenv("RSTP_STREAM")
+    netstream = cv2.VideoCapture(stream_url)
     readframeCounter = 0
     chunkFrameStart = 0
     chunkTimeStart = time.time()
+
+    # Reconnection parameters
+    reconnect_attempts = 0
+    max_reconnect_attempts = 10
+    reconnect_delay = 2  # Initial delay in seconds
+
     while not stop_threads:
         ret, frame = netstream.read()
+        
         if not ret:
-            print("Frame is empty")
-            time.sleep(0.5)
+            print("Frame is empty, attempting to reconnect...")
+            reconnect_attempts += 1
+            if reconnect_attempts > max_reconnect_attempts:
+                print(f"Max reconnect attempts reached. Reinitializing VideoCapture.")
+                netstream.release()  # Release the current capture object
+                time.sleep(reconnect_delay)  # Wait before attempting to reconnect
+                netstream = cv2.VideoCapture(stream_url)
+                reconnect_attempts = 0
+                reconnect_delay = min(reconnect_delay * 2, 60)  # Exponential backoff, capped at 60 seconds
+            else:
+                time.sleep(0.5)  # Short sleep before the next attempt
             continue
+
+        # Reset reconnection attempts if a frame is successfully read
+        reconnect_attempts = 0
+        reconnect_delay = 2  # Reset delay to the initial value
+
         # Put the frame into the queue
-        readframeCounter = readframeCounter + 1
+        readframeCounter += 1
         frame_queue.put(frame)
-        if (readframeCounter % 100 == 0):
+        
+        # Logging frame processing statistics
+        if readframeCounter % 100 == 0:
             chunkFrameEnd = readframeCounter
             chunkTimeEnd = time.time()
-            print("netstream read: ", (chunkFrameEnd - chunkFrameStart)/(chunkTimeEnd - chunkTimeStart), " FPS: ")
+            fps = (chunkFrameEnd - chunkFrameStart) / (chunkTimeEnd - chunkTimeStart)
+            print(f"netstream read: {fps:.2f} FPS")
             chunkFrameStart = chunkFrameEnd
             chunkTimeStart = chunkTimeEnd
+
+    # Release the VideoCapture when stopping
+    netstream.release()
 
 read_thread = threading.Thread(target=read_frames)
 read_thread.start()

@@ -1,1 +1,5 @@
-haTest
+test how to call HA API
+
+curl -X POST -H "Authorization: Bearer TOKEN_FROM_ENV"
+ -H "Content-Type: application/json" -d '{"state": "value", "attributes": { "friendly_name": "Cat AI detect result"}}' http://hassio.lan:8124/api/states/sensor.catAIdetect
+
