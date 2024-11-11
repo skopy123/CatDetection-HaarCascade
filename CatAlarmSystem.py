@@ -31,7 +31,7 @@ import modPushBulletWrapper as pb
 import modMotionDetection as motionDetection
 import modImageTools as imageTools
 import modHaarCascade as catHaarCascade
-import modhaHttpSensorPush as haApi
+import modHaHttpSensorPush as haApi
 
 print("Cat recognition system")
 
@@ -91,7 +91,7 @@ def processFrame(im:cv2.typing.MatLike, frameNumber:int):
             pb.SendNotificationWithRateLimiter("Cat detected: " + catMatches[0].Name + " dist:" + f"{catMatches[0].DistanceToTemplatesMin:.2f}")
     else:
         if (catMatches[0].DistanceToTemplatesMin < 0.5):
-            haApi.HaPostSensorValue("Unconfirmed:"catMatches[0].Name, "http://hassio.lan:8124")
+            haApi.HaPostSensorValue("Unconfirmed:" + catMatches[0].Name, "http://hassio.lan:8124")
         else:
             haApi.HaPostSensorValue("noCat", "http://hassio.lan:8124")
 

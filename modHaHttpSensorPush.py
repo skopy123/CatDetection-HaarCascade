@@ -1,6 +1,7 @@
 import requests
 import os
 import json
+import time
 
 lastNotificationTime = time.time() - 20
 
@@ -19,7 +20,7 @@ def HaPostSensorValue(value, base_url):
     :param auth_token: Optional. Authorization token. If not provided, it's fetched from the environment.
     """
     # Fetch the auth token from environment if not provided
-        auth_token = os.getenv("HASSIO_TOKEN")
+    auth_token = os.getenv("HASSIO_TOKEN")
 
     # Prepare the headers
     headers = {
