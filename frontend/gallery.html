@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Cats</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="vendor/cropper.min.css">
+  <script src="vendor/cropper.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="row spread">
+    <h1>Cats &amp; reference images</h1>
+    <div class="row">
+      <select id="mode-filter">
+        <option value="">day + night</option>
+        <option value="day">day only</option>
+        <option value="night">night only</option>
+      </select>
+    </div>
+  </div>
+  <p class="muted small">
+    All cameras share these references. Tight crops of the cat work best; add both day and IR night pictures.
+    Around 5–20 per cat and mode is plenty. Changes apply immediately, no restart needed.
+    Tip: good new references come from <a href="events.html">Events</a> (“add to gallery”).
+  </p>
+
+  <div id="cats" class="stack"></div>
+
+  <section class="card" style="margin-top:1rem">
+    <h2>Add a cat</h2>
+    <form id="add-cat" class="row">
+      <input name="name" placeholder="Name, e.g. Maugli" required>
+      <input name="id" placeholder="id (optional)" pattern="[a-z0-9][a-z0-9_-]{0,31}" title="lowercase letters, digits, _ or -">
+      <button class="primary">Add</button>
+    </form>
+  </section>
+
+  <section class="card" style="margin-top:1rem">
+    <div class="row spread">
+      <h2>Similarity matrix</h2>
+      <select id="matrix-mode"><option value="day">day</option><option value="night">night</option></select>
+    </div>
+    <p class="small muted">Cosine distance between all references (<span id="matrix-embedder"></span>).
+      Strong color = similar. Each cat's own block along the diagonal should be strong, everything else faint. A reference that is
+      close to another cat's pictures is a candidate for removal.</p>
+    <div id="matrix" style="overflow-x:auto"></div>
+  </section>
+</main>
+<input type="file" id="file" accept="image/*" hidden>
+<script type="module" src="js/gallery.js"></script>
+</body>
+</html>

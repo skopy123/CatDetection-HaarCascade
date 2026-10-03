@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Settings</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="stack">
+  <h1>Settings</h1>
+
+  <section class="card" id="cameras">
+    <div class="row spread"><h2>Cameras</h2><button id="add-camera" class="primary">+ Add camera</button></div>
+    <p class="small muted">Every camera is analysed separately and gets its own Home Assistant sensor; all share the cat
+      gallery. The URL may reference an environment variable, e.g. <code>${RTSP_GARDEN}</code>, to keep passwords
+      out of the config file. <code>fake:/path/to/images?fps=5</code> replays pictures for testing.</p>
+    <table><thead><tr><th>Id</th><th>Name</th><th>URL</th><th>HA entity</th><th>Enabled</th><th></th></tr></thead>
+      <tbody id="camera-rows"></tbody></table>
+  </section>
+
+  <form id="settings" class="stack">
+    <section class="card">
+      <h2>Recognition</h2>
+      <div class="form-grid">
+        <label>Embedder model <select name="embedder"></select></label>
+        <label>Detector model <select name="detector.model">
+          <option value="yolo11s">YOLO11s (default, better for dark/partly visible cats)</option>
+          <option value="yolo11n">YOLO11n (fastest)</option></select></label>
+        <label>Detector confidence <input name="detector.confidence" type="number" step="0.01" min="0.01" max="1"></label>
+        <label>Crop padding <input name="detector.padding" type="number" step="0.01" min="0" max="1"></label>
+        <label class="inline" style="margin-top:1.4rem"><input name="detector.enabled" type="checkbox"> use detector (off = whole frame, like v1)</label>
+      </div>
+      <h2 style="margin-top:1rem">Matching</h2>
+      <div class="form-grid">
+        <label>Match distance ≤ <input name="thresholds.match" type="number" step="0.01" min="0" max="2"></label>
+        <label>Unconfirmed distance ≤ <input name="thresholds.unconfirmed" type="number" step="0.01" min="0" max="2"></label>
+        <label>Margin to 2nd cat ≥ <input name="thresholds.margin" type="number" step="0.01" min="0" max="2"></label>
+        <label>k nearest references <input name="thresholds.knn_k" type="number" min="1" max="10"></label>
+        <label>Votes needed <input name="thresholds.vote_k" type="number" min="1" max="20"></label>
+        <label>Vote window <input name="thresholds.vote_n" type="number" min="1" max="50"></label>
+        <label>Hold time (s) <input name="thresholds.hold_s" type="number" min="0" max="600"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Performance &amp; storage</h2>
+      <div class="form-grid">
+        <label>Motion check rate (fps) <input name="motion_fps" type="number" step="0.5" min="0.5" max="30"></label>
+        <label>Max analyses per camera (fps) <input name="process_fps" type="number" step="0.5" min="0.1" max="15"></label>
+        <label>Keep events for (days) <input name="retention_days" type="number" min="1"></label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Home Assistant</h2>
+      <div class="form-grid">
+        <label>URL <input name="ha.url" placeholder="http://homeassistant.local:8123"></label>
+        <label>Token <input name="ha.token" placeholder="${HA_TOKEN}"></label>
+        <label>Heartbeat (s) <input name="ha.heartbeat_s" type="number" min="5"></label>
+        <label>Public URL of CatAlarm <input name="public_url" placeholder="http://catalarm.lan:8080"></label>
+        <label class="inline" style="margin-top:1.4rem"><input name="ha.enabled" type="checkbox"> send states to HA</label>
+      </div>
+      <p class="small muted">Use a long-lived access token (HA profile → Security). <code>${HA_TOKEN}</code> reads it
+        from the container environment. The public URL is used for <code>snapshot_url</code> in sensor attributes.
+        <span id="ha-status"></span></p>
+    </section>
+    <div class="row"><button class="primary">Save settings</button></div>
+  </form>
+</main>
+
+<dialog id="camera-dialog">
+  <form method="dialog" id="camera-form">
+    <h2 id="camera-dialog-title">Camera</h2>
+    <div class="form-grid">
+      <label>Id <input name="id" required pattern="[a-z0-9][a-z0-9_-]{0,31}" title="lowercase letters, digits, _ or -"></label>
+      <label>Name <input name="name"></label>
+    </div>
+    <label>Stream URL <input name="url" required placeholder="rtsp://user:pass@192.168.1.20:554/stream1"></label>
+    <label>HA entity (optional) <input name="ha_entity" placeholder="sensor.cat_ai_<id>"></label>
+    <label class="inline"><input name="enabled" type="checkbox" checked> enabled</label>
+    <div class="row" style="margin-top:1rem;justify-content:flex-end">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="save" class="primary">Save</button>
+    </div>
+  </form>
+</dialog>
+<script type="module" src="js/settings.js"></script>
+</body>
+</html>

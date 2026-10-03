@@ -93,3 +93,11 @@ ENV/
 cats/
 images/
 haTest.txt.http
+
+# CatAlarm v2 local dev
+.models/
+.devdata/
+.shots/
+data/
+.ruff_cache/
+.pytest_cache/

@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Camera</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="vendor/cropper.min.css">
+  <script src="vendor/cropper.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="row spread">
+    <h1 id="title">Camera</h1>
+    <div class="row">
+      <span class="dot" id="dot"></span><span class="state" id="state">–</span>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="stack">
+      <section class="card flush">
+        <div class="video" id="video">
+          <img id="stream" alt="live view">
+          <canvas id="mask-canvas" hidden></canvas>
+        </div>
+        <div class="body row spread">
+          <div class="row" id="overlays">
+            <label class="inline"><input type="checkbox" value="boxes" checked> boxes</label>
+            <label class="inline"><input type="checkbox" value="label" checked> label</label>
+            <label class="inline"><input type="checkbox" value="mask"> mask</label>
+            <label class="inline"><input type="checkbox" value="motion"> motion</label>
+          </div>
+          <div class="row">
+            <button id="pause">Pause</button>
+            <button id="step" title="Analyse the next frame now, even without motion">Step</button>
+            <button id="capture" title="Crop the current frame into the gallery">Add frame to gallery</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="row spread">
+          <h2>Motion mask</h2>
+          <div class="row">
+            <button id="edit-mask">Edit ignored areas</button>
+            <button id="mask-close" hidden>Close polygon</button>
+            <button id="mask-clear" hidden class="danger">Clear all</button>
+            <button id="mask-save" hidden class="primary">Save mask</button>
+          </div>
+        </div>
+        <p class="small muted" id="mask-help" hidden>
+          Click on the image to place points of an area that motion detection should ignore
+          (timestamp overlay, trees, a TV…). “Close polygon” finishes an area; you can draw several.
+        </p>
+        <div class="form-grid">
+          <label>Motion sensitivity – changed area (% of frame)
+            <input type="number" id="min-area" step="0.01" min="0" max="100">
+          </label>
+          <label>Pixel threshold (1–254)
+            <input type="number" id="threshold" min="1" max="254">
+          </label>
+          <label class="inline" style="margin-top:1.4rem">
+            <input type="checkbox" id="motion-enabled"> motion gate enabled
+          </label>
+        </div>
+        <div class="row">
+          <button id="motion-save">Save motion settings</button>
+          <span class="small muted" id="motion-live"></span>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <h2>Status</h2>
+        <table class="small" id="status"></table>
+      </section>
+      <section class="card">
+        <h2>Last analysis</h2>
+        <div id="analysis" class="small muted">Nothing analysed yet – waiting for motion.</div>
+      </section>
+      <section class="card">
+        <h2>Motion (what the gate sees)</h2>
+        <div class="video" style="aspect-ratio:16/9"><img id="motion-img" alt="motion mask"></div>
+      </section>
+      <section class="card">
+        <h2>Matching thresholds <span class="small muted">(all cameras)</span></h2>
+        <div id="thresholds"></div>
+        <button id="th-save">Apply</button>
+      </section>
+    </div>
+  </div>
+</main>
+<script type="module" src="js/camera.js"></script>
+</body>
+</html>

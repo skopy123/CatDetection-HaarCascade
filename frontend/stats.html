@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Statistics</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="vendor/chart.umd.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="row spread">
+    <h1>Statistics</h1>
+    <select id="days">
+      <option value="7">last 7 days</option>
+      <option value="30">last 30 days</option>
+      <option value="90">last 90 days</option>
+    </select>
+  </div>
+
+  <div class="stack">
+    <section class="card">
+      <h2>Visits per day</h2>
+      <div style="height:280px"><canvas id="daily" aria-label="visits per day by cat"></canvas></div>
+      <details class="small"><summary>Table view</summary><div id="daily-table"></div></details>
+    </section>
+
+    <div class="cols">
+      <section class="card">
+        <h2>Time of day</h2>
+        <p class="small muted">Visits per hour – stronger color = more visits.</p>
+        <div id="hourly" style="overflow-x:auto"></div>
+      </section>
+      <section class="card">
+        <h2>Time in front of the camera</h2>
+        <div id="durations" class="bars"></div>
+      </section>
+    </div>
+
+    <div class="cols">
+      <section class="card">
+        <h2>Recognition quality</h2>
+        <p class="small muted">State changes per camera. Many “unconfirmed” means references are missing
+          for some look (angle, light) – add snapshots from Events to the gallery.</p>
+        <div id="states"></div>
+      </section>
+      <section class="card">
+        <h2>Processing time (last 24 h)</h2>
+        <div style="height:220px"><canvas id="perf" aria-label="processing time in milliseconds"></canvas></div>
+      </section>
+    </div>
+  </div>
+</main>
+<script type="module" src="js/stats.js"></script>
+</body>
+</html>

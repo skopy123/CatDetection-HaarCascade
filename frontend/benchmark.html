@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Benchmark</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main class="stack">
+  <section class="card">
+    <h1>Test an image</h1>
+    <p class="small muted">Runs detection and identification on an uploaded picture with the current settings
+      (no effect on Home Assistant or statistics).</p>
+    <div class="row">
+      <input type="file" id="test-file" accept="image/*">
+      <select id="test-mode"><option value="auto">auto day/night</option><option value="day">day</option>
+        <option value="night">night</option></select>
+    </div>
+    <div class="cols" style="margin-top:1rem" id="test-result" hidden>
+      <div class="video" style="aspect-ratio:auto"><canvas id="test-canvas" style="position:static;width:100%;height:auto"></canvas></div>
+      <div id="test-details" class="small"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row spread">
+      <h1 style="margin:0">Embedder benchmark</h1>
+      <button id="run" class="primary">Run benchmark</button>
+    </div>
+    <p class="small muted">Leave-one-out test on your own gallery: every reference picture is identified against all the
+      others. <strong>Top-1</strong> = right cat ranked first. <strong>Accepted</strong> = passed the match threshold
+      (would be reported to HA). <strong>Precision</strong> = accepted and correct. A good model has a big gap between
+      same-cat and other-cat distance.</p>
+    <div id="results"></div>
+  </section>
+</main>
+<script type="module" src="js/benchmark.js"></script>
+</body>
+</html>

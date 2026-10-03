@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Dashboard</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<main>
+  <div class="row spread">
+    <h1>Cameras</h1>
+    <a class="btn" href="settings.html#cameras">+ Add camera</a>
+  </div>
+  <div id="cameras" class="grid"></div>
+  <p id="no-cameras" class="muted" hidden>No cameras configured yet. <a href="settings.html#cameras">Add one in Settings.</a></p>
+
+  <div class="cols" style="margin-top:1.5rem">
+    <section class="card">
+      <div class="row spread"><h2>Latest events</h2><a class="small" href="events.html">all events →</a></div>
+      <div id="events"></div>
+    </section>
+    <section class="card">
+      <h2>Today</h2>
+      <div id="today" class="bars"></div>
+    </section>
+  </div>
+</main>
+<script type="module" src="js/index.js"></script>
+</body>
+</html>

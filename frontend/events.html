@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CatAlarm – Events</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="vendor/cropper.min.css">
+  <script src="vendor/cropper.min.js"></script>
+</head>
+<body>
+<main>
+  <div class="row spread">
+    <h1>Events</h1>
+    <form id="filters" class="row">
+      <select name="camera_id"><option value="">all cameras</option></select>
+      <select name="cat_id"><option value="">all cats</option></select>
+      <label class="inline"><input type="checkbox" name="include_idle"> include no cat / no motion</label>
+    </form>
+  </div>
+  <p class="small muted">A new event is recorded whenever a camera's state changes. If a cat was identified wrongly,
+    relabel it, and add the snapshot to the gallery so the system learns that look.</p>
+  <section class="card">
+    <table>
+      <thead><tr><th>Snapshot</th><th>Time</th><th>Camera</th><th>State</th><th class="num">Confidence</th>
+        <th>Correct cat</th><th></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <div class="row" style="margin-top:.75rem"><button id="more">Load more</button></div>
+  </section>
+</main>
+<dialog id="viewer"><img id="viewer-img" alt="snapshot" style="max-width:100%"><div class="row" style="margin-top:.5rem">
+  <button onclick="this.closest('dialog').close()">Close</button></div></dialog>
+<script type="module" src="js/events.js"></script>
+</body>
+</html>

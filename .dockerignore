@@ -1,0 +1,15 @@
+.git
+.github
+.venv
+.models
+.devdata
+.shots
+data
+legacy
+PoCandTests
+tests
+**/__pycache__
+*.pyc
+.env
+*.mp4
+templates/*.json

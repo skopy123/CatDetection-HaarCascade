@@ -1,0 +1,22 @@
+services:
+  catalarm:
+    image: ghcr.io/skopy123/catalarm:latest
+    # build: .                      # or build locally instead of pulling
+    container_name: catalarm
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    env_file: .env                  # RTSP_URL, HA_URL, HA_TOKEN, ... (see .env.example)
+    environment:
+      TZ: Europe/Prague             # statistics are grouped by local day/hour
+    volumes:
+      - ./data:/data                # config.yaml, gallery/, catalarm.db, snapshots/
+
+  # Optional: replay a recorded clip as an RTSP camera for testing.
+  # Put clip.mp4 into ./test-media and use  rtsp://mediamtx:8554/test  as camera URL.
+  # mediamtx:
+  #   image: bluenviron/mediamtx:latest-ffmpeg
+  #   environment:
+  #     MTX_PATHS_TEST_RUNONINIT: ffmpeg -re -stream_loop -1 -i /media/clip.mp4 -c copy -f rtsp rtsp://localhost:8554/test
+  #   volumes:
+  #     - ./test-media:/media:ro
